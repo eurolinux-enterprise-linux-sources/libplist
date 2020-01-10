@@ -1,8 +1,8 @@
 %{!?python_sitearch: %global python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")}
 
 Name:          libplist
-Version:       1.10
-Release:       4%{?dist}
+Version:       1.12
+Release:       3%{?dist}
 Summary:       Library for manipulating Apple Binary and XML Property Lists
 
 Group:         System Environment/Libraries
@@ -10,31 +10,27 @@ License:       LGPLv2+
 URL:           http://www.libimobiledevice.org/
 Source0:       http://www.libimobiledevice.org/downloads/%{name}-%{version}.tar.bz2
 
-## upstreamable patches
-# add support for GNUInstallDirs (where available) and ${LIB_SUFFIX} convention
-Patch50: libplist-1.8-cmake_lib_suffix.patch
-
+BuildRequires: chrpath
+BuildRequires: Cython
 BuildRequires: libxml2-devel
 BuildRequires: python-devel
-BuildRequires: swig
-BuildRequires: cmake
-BuildRequires: Cython
+BuildRequires: python-setuptools
 
 %description
 libplist is a library for manipulating Apple Binary and XML Property Lists
 
-%package devel
-Summary: Development package for libplist
-Group: Development/Libraries
+%package  devel
+Summary:  Development package for libplist
+Group:    Development/Libraries
 Requires: libplist = %{version}-%{release}
 Requires: pkgconfig
 
 %description devel
 %{name}, development headers and libraries.
 
-%package python
-Summary: Python package for libplist
-Group: Development/Libraries
+%package  python
+Summary:  Python package for libplist
+Group:    Development/Libraries
 Requires: libplist = %{version}-%{release}
 Requires: python
 
@@ -43,33 +39,38 @@ Requires: python
 
 %prep
 %setup -q
-%patch50 -p1 -b .cmake_lib_suffix
 
 %build
-export CFLAGS=-fno-strict-aliasing
-export CMAKE_PREFIX_PATH=/usr
-%{cmake} -DCMAKE_SKIP_RPATH:BOOL=ON .
+export CFLAGS='%optflags -fno-strict-aliasing'
+export CXXFLAGS='%optflags -fno-strict-aliasing'
+%configure --disable-static
 
 make V=1
 
 %install
-export CMAKE_PREFIX_PATH=/usr
 make install DESTDIR=$RPM_BUILD_ROOT
+
+find $RPM_BUILD_ROOT -type f -name "*.la" -delete
+
+chrpath --delete $RPM_BUILD_ROOT%{_bindir}/plistutil
+chrpath --delete $RPM_BUILD_ROOT%{_libdir}/libplist++.so.3*
+chrpath --delete $RPM_BUILD_ROOT%{python_sitearch}/plist*
+
+%check
+make check
 
 %post -p /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
 
 %files
-%defattr(-,root,root,-)
-%doc AUTHORS COPYING.LESSER README
+%license COPYING.LESSER
+%doc AUTHORS README
 %{_bindir}/plistutil
-%{_bindir}/plistutil-%{version}
-%{_libdir}/libplist.so.*
-%{_libdir}/libplist++.so.*
+%{_libdir}/libplist.so.3*
+%{_libdir}/libplist++.so.3*
 
 %files devel
-%defattr(-,root,root,-)
 %{_libdir}/pkgconfig/libplist.pc
 %{_libdir}/pkgconfig/libplist++.pc
 %{_libdir}/libplist.so
@@ -77,10 +78,21 @@ make install DESTDIR=$RPM_BUILD_ROOT
 %{_includedir}/plist
 
 %files python
-%defattr(-,root,root,-)
 %{python_sitearch}/plist*
 
 %changelog
+* Mon Mar 27 2017 Kalev Lember <klember@redhat.com> - 1.12-3
+- Drop previous ABI version compatibility
+- Resolves: #1430798
+
+* Thu Mar 09 2017 Kalev Lember <klember@redhat.com> - 1.12-2
+- Include previous ABI version for temporary binary compatibility
+- Resolves: #1430798
+
+* Thu Mar 09 2017 Kalev Lember <klember@redhat.com> - 1.12-1
+- New upstream 1.12 release
+- Resolves: #1430798
+
 * Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 1.10-4
 - Mass rebuild 2014-01-24
 
