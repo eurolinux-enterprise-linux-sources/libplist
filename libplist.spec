@@ -2,7 +2,7 @@
 
 Name:          libplist
 Version:       1.10
-Release:       2%{?dist}
+Release:       4%{?dist}
 Summary:       Library for manipulating Apple Binary and XML Property Lists
 
 Group:         System Environment/Libraries
@@ -81,6 +81,12 @@ make install DESTDIR=$RPM_BUILD_ROOT
 %{python_sitearch}/plist*
 
 %changelog
+* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 1.10-4
+- Mass rebuild 2014-01-24
+
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 1.10-3
+- Mass rebuild 2013-12-27
+
 * Tue Oct  8 2013 Matthias Clasen <mclasen@redhat.com> - 1.10-2
 - Disable strict aliasing (related: #884099)
 
